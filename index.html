@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="margin: 0;">
+
+    <button class="btn" onclick=saveDraw()>Сохранить</button>
+    <button class="btn" onclick=clearDraw()>Очистить</button>
+    <button class="btn btn-primary" onclick=replayDraw()>Повторить</button>
+
+    <input id="size" onblur=setBrushSize(value) value="10" placeholder="размер кисти" style="width: 100px;">
+
+    <select id="colors" onblur=changeColor()>
+        <option value = "black">черный</option>
+        <option value = "red">красный</option>
+        <option value="blue">синий</option>
+        <option value="green">зелёный</option>
+    </select>
+
+    <canvas class="canvas" id="canvas" >Ошибка</canvas>
+
+    <script>
+        let canv = document.getElementById('canvas')
+        let ctx = canv.getContext('2d')
+        let isMouseDown = false;
+        let coords = [];
+        let brushSize = 10;
+        let brushColor = "black";
+
+        canv.width = window.innerWidth;
+        canv.height = window.innerHeight
+
+        //code
+
+        canv.addEventListener('mousedown', function(e) {
+            isMouseDown = true;
+        } );
+
+        canv.addEventListener('mouseup', function(e) {
+            isMouseDown = false;
+            ctx.beginPath()
+            coords.push('mouseup');
+        } );
+
+        ctx.lineWidth = brushSize * 2;
+        canv.addEventListener('mousemove', function(e) {
+            if (isMouseDown) {
+               /* document.getElementsByTagName("body")[0].style.cursor = "url('http://wiki-devel.sugarlabs.org/images/e/e2/Arrow.cur'), auto";*/
+
+                coords.push([e.clientX, e.clientY])
+
+                ctx.fillStyle = brushColor;
+                ctx.strokeStyle = brushColor;
+
+                ctx.lineTo(e.clientX, e.clientY);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(e.clientX, e.clientY, brushSize , 0, Math.PI * 2)
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(e.clientX, e.clientY);
+            }
+
+        })
+
+        function changeColor() {
+            let color = document.getElementById("colors");
+            brushColor = color.options[color.selectedIndex].value;
+        }
+
+        function setBrushSize(newBrushSize) {
+            let size = document.getElementById("size");
+
+            if (newBrushSize !== "") {
+                brushSize = newBrushSize;
+                ctx.lineWidth = brushSize * 2;
+            }
+            else {
+                brushSize = 10;
+                size.value = 10;
+            }
+        }
+
+        function saveDraw() {
+            save();
+        }
+
+        function save() {
+            localStorage.setItem('coords', JSON.stringify(coords))
+        }
+
+        function replayDraw() {
+            coords = JSON.parse(localStorage.getItem('coords'))
+            clear();
+            replay()
+        }
+
+        function replay() {
+            let timer = setInterval(function () {
+                if( !coords.length )
+                {
+                    clearInterval(timer)
+                    ctx.beginPath();
+                    return;
+                }
+
+                let crd = coords.shift(),
+                    e = {
+                        clientX: crd["0"],
+                        clientY: crd["1"]
+                    };
+
+                ctx.fillStyle = brushColor;
+                ctx.strokeStyle = brushColor;
+
+                ctx.lineTo(e.clientX, e.clientY);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(e.clientX, e.clientY, brushSize , 0, Math.PI * 2)
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(e.clientX, e.clientY);
+            }, 0.5)
+        }
+
+        function clearDraw() {
+            clear()
+        }
+
+        function clear() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canv.width, canv.height )
+
+            ctx.beginPath();
+            ctx.fillStyle = 'black'
+        }
+
+
+
+        /*// текст с градиентом
+        let grad = ctx.createLinearGradient(0, 0, 500, 0);
+
+        grad.addColorStop('0', 'magenta');
+        grad.addColorStop('.50', 'blue');
+        grad.addColorStop('1', 'red');
+        ctx.fillStyle = grad;
+
+        /!*ctx.textAlign = 'center';*!/ //текст относительно себя по центру
+        ctx.font = '20px Georgia';
+        // ctx.fillText("Hello world!", canv.width / 2, canv.height / 2); // чтобы было по центру
+        ctx.fillText("Hello world!", 50, 50);*/
+
+        /*// треугольник
+        ctx.strokeStyle = 'red'
+        ctx.lineWidth = 5;
+
+        ctx.scale(3, 3); // размер отрисовки последующих элесентов
+        ctx.rotate( 10 * Math.PI / 180) // поворот
+
+        ctx.beginPath();
+        ctx.moveTo(50, 50);
+        ctx.lineTo(25, 100);
+        ctx.lineTo(75, 100);
+        ctx.closePath();
+        ctx.stroke();*/
+
+        /*//круг
+        context.arc(canvas.width / 2, canvas.height / 2, 100, 0, Math.PI * 2);
+        context.fill();*/
+
+        /*//квадрат без закрашивания
+        context.strokeStyle = 'red'
+        context.lineWidth = 10;
+        context.strokeRect(x, 50, 300, 200)*/
+
+        /*//анимация движения квадрата вправо
+        setInterval(function () {
+            context.fillStyle='white';
+            context.fillRect(0, 0, canvas.width, canvas.height)
+
+            context.fillStyle = 'magenta';
+            context.fillRect(x++, 50, 300, 200);
+        }, 10)*/
+    </script>
+
+</body>
+</html>
